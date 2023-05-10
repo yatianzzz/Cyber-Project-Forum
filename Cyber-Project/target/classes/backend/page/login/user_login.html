@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+        }
+        html {
+            height: 100%;
+        }
+        body {
+            height: 100%;
+        }
+        .container {
+            height: 100%;
+            background-image: linear-gradient(to right, #99ff99, #bbffee);
+        }
+        .login-wrapper {
+            background-color: #fff;
+            width: 358px;
+            height: 588px;
+            border-radius: 15px;
+            padding: 0 50px;
+            position: relative;
+            left: 50%;
+            top: 50%;
+            transform: translate(-50%, -50%);
+        }
+
+        .header {
+            position: relative;
+            font-size: 38px;
+            font-weight: bold;
+            text-align: center;
+            line-height: 200px;
+        }
+        .forum-header {
+            position: absolute;
+            font-size: 16px;
+            text-align: left;
+            top: 40px;
+            left: 140px;
+        }
+        .input-item {
+            display: block;
+            width: 100%;
+            margin-bottom: 20px;
+            border: 0;
+            padding: 10px;
+            border-bottom: 1px solid rgb(128, 125, 125);
+            font-size: 15px;
+            outline: none;
+        }
+        .input-item:placeholder {
+            text-transform: uppercase;
+        }
+        .btn {
+            text-align: center;
+            padding: 10px;
+            width: 100%;
+            margin-top: 40px;
+            background-image: linear-gradient(to right,  #99ff99, #bbffee);
+            color: #000000;
+        }
+        .msg {
+            text-align: center;
+            line-height: 88px;
+        }
+        a {
+            text-decoration-line: none;
+            color: #abc1ee;
+        }
+    </style>
+    <script src="../../plugins/vue/vue.js"></script>
+    <script src="../../plugins/element-ui/index.js"></script>
+    <script src="../../plugins/axios/axios.min.js"></script>
+    <script src="https://cdn.bootcdn.net/ajax/libs/jsencrypt/2.3.1/jsencrypt.min.js"></script>
+</head>
+<body>
+<div class="container">
+    <div class="login-wrapper">
+        <div class="header">
+            Login
+            <div class="forum-header">Forum zzz</div>
+        </div>
+        <div id="app" class="form-wrapper">
+            <input type="text" name="username" v-model="userName" placeholder="username" class="input-item">
+            <input type="password" name="password" v-model="password" placeholder="password" class="input-item">
+            <div class="btn" @click="login">Login</div>
+            <div class="btn" @click="goToRegister">Register</div>
+        </div>
+    </div>
+</div>
+</body>
+
+
+<script>
+    var app = new Vue({
+        el: '#app',
+        created: function () {
+
+        },
+        methods: {
+            login: function () {
+
+                var that = this;
+
+
+                // Request public key
+                axios({
+                    method: 'get',
+                    url: 'http://localhost:8888/users/getPublicKey',
+
+                }).then(function (res) {
+                    //Request success  other number stand for fail
+                    if (res.data.code === 1) {
+                        console.log(res.data.data)
+                        let publicKey = res.data.data
+
+
+                        let encrypt = new JSEncrypt()
+                        encrypt.setPublicKey(publicKey)
+                        let new_password = that.password
+                        new_password = encrypt.encrypt(new_password)
+                        new_userName  =encrypt.encrypt(that.userName)
+                        console.log("new_password:"+new_password)
+                        const user = {
+                            id:0,
+                            userName: new_userName,
+                            password: new_password,
+                        }
+
+                        // Get the encrypted password to request Sever
+                        axios({
+                            method: 'post',
+                            url: 'http://localhost:8888/users/login',
+                            data: user
+                        }).then(function (res) {
+                            if (res.data.code === 1) {
+                                alert("You are authenticated, Welcome "+res.data.data.userName)
+                                window.location.href= 'index.html'
+                            } else {
+                                alert("Please enter correct username password")
+                            }
+                        }, function (error) {
+                            alert("Unable to request API")
+                        })
+
+                    } else {
+                        alert("Request Fail")
+                    }
+                }, function (error) {
+                    alert("Request Fail")
+                })
+
+            },
+
+            goToRegister: function () {
+                window.location.href= '../Register/register.html'
+            }
+
+        },
+
+        data: {
+            userName: "",
+            password: "",
+        }
+    })
+
+
+</script>
+
+</html>
